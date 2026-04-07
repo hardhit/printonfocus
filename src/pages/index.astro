@@ -23,9 +23,12 @@ const posts = (await getCollection('news')).sort(
               />
             )}
             <div class="post-body">
-              <time datetime={post.data.pubDate.toISOString()}>
-                {post.data.pubDate.toLocaleDateString('ja-JP')}
-              </time>
+              <div class="post-meta">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {post.data.pubDate.toLocaleDateString('ja-JP')}
+                </time>
+                {post.data.country && <span class="country-badge">{post.data.country}</span>}
+              </div>
               <h2>{post.data.title}</h2>
               <p>{post.data.description}</p>
             </div>
@@ -72,9 +75,25 @@ const posts = (await getCollection('news')).sort(
     flex-shrink: 0;
   }
 
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .post-body time {
     font-size: 0.8rem;
     color: #888;
+  }
+
+  .country-badge {
+    font-size: 0.7rem;
+    background: #e0f0ff;
+    color: #1a6bb5;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   .post-body h2 {
