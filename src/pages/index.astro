@@ -1,0 +1,60 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const posts = (await getCollection('news')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout title="ホーム">
+  <h1>最新ニュース</h1>
+  <ul class="post-list">
+    {
+      posts.map((post) => (
+        <li class="post-item">
+          <time datetime={post.data.pubDate.toISOString()}>
+            {post.data.pubDate.toLocaleDateString('ja-JP')}
+          </time>
+          <a href={`/news/${post.id}/`}>
+            <h2>{post.data.title}</h2>
+          </a>
+          <p>{post.data.description}</p>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #222;
+  }
+
+  .post-list {
+    list-style: none;
+  }
+
+  .post-item {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .post-item time {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .post-item h2 {
+    font-size: 1.1rem;
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .post-item p {
+    font-size: 0.95rem;
+    color: #555;
+  }
+</style>
