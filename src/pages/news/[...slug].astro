@@ -16,6 +16,19 @@ const { Content } = await render(post);
 
 <BaseLayout title={post.data.title} description={post.data.description}>
   <article>
+    {post.data.image && (
+      <figure class="hero-image">
+        <img
+          src={post.data.image}
+          alt={post.data.photographer ? `Photo by ${post.data.photographer} on Unsplash` : post.data.title}
+        />
+        {post.data.photographer && (
+          <figcaption>
+            Photo by <a href={post.data.photographerUrl} target="_blank" rel="noopener noreferrer">{post.data.photographer}</a> on Unsplash
+          </figcaption>
+        )}
+      </figure>
+    )}
     <header class="article-header">
       <time datetime={post.data.pubDate.toISOString()}>
         {post.data.pubDate.toLocaleDateString('ja-JP')}
@@ -42,6 +55,29 @@ const { Content } = await render(post);
 </BaseLayout>
 
 <style>
+  .hero-image {
+    margin: 0 0 1.5rem;
+  }
+
+  .hero-image img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  .hero-image figcaption {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.4rem;
+    text-align: right;
+  }
+
+  .hero-image figcaption a {
+    color: #999;
+    text-decoration: underline;
+  }
+
   .article-header {
     margin-bottom: 2rem;
   }
