@@ -1,0 +1,54 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('news');
+  const countries = [...new Set(posts.flatMap((p) => p.data.country))];
+  return countries.map((country) => ({
+    params: { country },
+    props: {
+      country,
+      posts: posts
+        .filter((p) => p.data.country.includes(country))
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+    },
+  }));
+}
+
+const { country, posts } = Astro.props;
+---
+
+<BaseLayout title={`${country} の記事`}>
+  <h1>{country}</h1>
+  <p class="archive-count">{posts.length} 件の記事</p>
+  <ul class="post-list">
+    {posts.map((post: any) => (
+      <li class="post-item">
+        <a href={`/news/${post.id}/`} class="post-link">
+          <div class="post-body">
+            <time datetime={post.data.pubDate.toISOString()}>
+              {post.data.pubDate.toLocaleDateString('ja-JP')}
+            </time>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+          </div>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <a href="/" class="back-link">&larr; ホームに戻る</a>
+</BaseLayout>
+
+<style>
+  h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+  .archive-count { font-size: 0.85rem; color: #888; margin-bottom: 1.5rem; }
+  .post-list { list-style: none; }
+  .post-item { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee; }
+  .post-link { text-decoration: none; color: inherit; }
+  .post-link:hover h2 { text-decoration: underline; }
+  .post-body time { font-size: 0.8rem; color: #888; }
+  .post-body h2 { font-size: 1.05rem; margin: 0.25rem 0 0.5rem; color: #222; }
+  .post-body p { font-size: 0.9rem; color: #555; }
+  .back-link { font-size: 0.85rem; }
+</style>

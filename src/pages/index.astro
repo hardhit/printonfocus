@@ -5,13 +5,67 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const posts = (await getCollection('news')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+
+const hero = posts.find((p) => p.data.importance === 5);
+const secondary = posts.filter((p) => p.data.importance === 4 && p !== hero);
+const rest = posts.filter((p) => p !== hero && !secondary.includes(p));
 ---
 
 <BaseLayout title="ホーム">
-  <h1>最新ニュース</h1>
-  <ul class="post-list">
-    {
-      posts.map((post) => (
+  {/* Hero: importance 5 */}
+  {hero && (
+    <a href={`/news/${hero.id}/`} class="hero-card">
+      {hero.data.image && (
+        <img
+          src={hero.data.image}
+          alt={hero.data.photographer ? `Photo by ${hero.data.photographer} on Unsplash` : hero.data.title}
+          class="hero-img"
+        />
+      )}
+      <div class="hero-body">
+        <div class="hero-meta">
+          {hero.data.country.map((c: string) => <span class="country-badge">{c}</span>)}
+          {hero.data.source && <span class="source-name">{hero.data.source}</span>}
+        </div>
+        <h1>{hero.data.title}</h1>
+        <p>{hero.data.description}</p>
+      </div>
+    </a>
+  )}
+
+  {/* Secondary: importance 4 */}
+  {secondary.length > 0 && (
+    <div class="secondary-grid">
+      {secondary.map((post) => (
+        <a href={`/news/${post.id}/`} class="secondary-card">
+          {post.data.image && (
+            <img
+              src={post.data.image}
+              alt={post.data.photographer ? `Photo by ${post.data.photographer} on Unsplash` : post.data.title}
+              class="secondary-img"
+              loading="lazy"
+            />
+          )}
+          <div class="secondary-body">
+            <div class="post-meta">
+              <time datetime={post.data.pubDate.toISOString()}>
+                {post.data.pubDate.toLocaleDateString('ja-JP')}
+              </time>
+              {post.data.country.map((c: string) => <span class="country-badge">{c}</span>)}
+              {post.data.source && <span class="source-name">{post.data.source}</span>}
+            </div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+
+  {/* Rest: normal grid */}
+  {rest.length > 0 && (
+    <ul class="post-list">
+      {rest.map((post) => (
         <li class="post-item">
           <a href={`/news/${post.id}/`} class="post-link">
             {post.data.image && (
@@ -27,7 +81,7 @@ const posts = (await getCollection('news')).sort(
                 <time datetime={post.data.pubDate.toISOString()}>
                   {post.data.pubDate.toLocaleDateString('ja-JP')}
                 </time>
-                {post.data.country && <span class="country-badge">{post.data.country}</span>}
+                {post.data.country.map((c: string) => <span class="country-badge">{c}</span>)}
                 {post.data.source && <span class="source-name">{post.data.source}</span>}
               </div>
               <h2>{post.data.title}</h2>
@@ -35,24 +89,108 @@ const posts = (await getCollection('news')).sort(
             </div>
           </a>
         </li>
-      ))
-    }
-  </ul>
+      ))}
+    </ul>
+  )}
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
+  /* Hero card */
+  .hero-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+  }
+
+  .hero-card:hover h1 {
+    text-decoration: underline;
+  }
+
+  .hero-img {
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+  }
+
+  .hero-body {
+    padding: 1.25rem;
+  }
+
+  .hero-body h1 {
+    font-size: 1.4rem;
+    margin: 0.5rem 0;
+    line-height: 1.4;
     color: #222;
   }
 
+  .hero-body p {
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* Secondary grid */
+  .secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .secondary-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .secondary-card:hover h2 {
+    text-decoration: underline;
+  }
+
+  .secondary-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .secondary-body {
+    padding: 1rem;
+  }
+
+  .secondary-body h2 {
+    font-size: 1.05rem;
+    margin: 0.3rem 0 0.5rem;
+    color: #222;
+    line-height: 1.4;
+  }
+
+  .secondary-body p {
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  /* Normal list */
   .post-list {
     list-style: none;
   }
 
   .post-item {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid #eee;
   }
@@ -76,13 +214,15 @@ const posts = (await getCollection('news')).sort(
     flex-shrink: 0;
   }
 
+  /* Shared meta */
   .post-meta {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
   }
 
+  .post-meta time,
   .post-body time {
     font-size: 0.8rem;
     color: #888;
@@ -104,7 +244,8 @@ const posts = (await getCollection('news')).sort(
     font-style: italic;
   }
 
-  .post-body h2 {
+  .post-body h2,
+  .secondary-body h2 {
     font-size: 1.1rem;
     margin: 0.25rem 0 0.5rem;
     color: #222;

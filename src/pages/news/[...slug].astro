@@ -13,11 +13,22 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
-// Resolve related posts
 const allPosts = await getCollection('news');
+
+// Resolve related posts
 const relatedPosts = post.data.relatedPosts
   .map((id: string) => allPosts.find((p) => p.id === id))
   .filter(Boolean);
+
+// Compare table: same category posts (max 3, excluding self)
+const comparePosts = post.data.compareTable && post.data.category
+  ? allPosts
+      .filter((p) => p.data.category === post.data.category && p.id !== post.id)
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+      .slice(0, 3)
+  : [];
+
+const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description}>
@@ -37,9 +48,10 @@ const relatedPosts = post.data.relatedPosts
       </figure>
     )}
 
-    {/* ② Country badge + tags */}
+    {/* ② Country badges + category tags */}
     <div class="meta-row">
-      {post.data.country && <span class="country-badge">{post.data.country}</span>}
+      {post.data.country.map((c: string) => <span class="country-badge">{c}</span>)}
+      {post.data.category && <span class="category-badge">{post.data.category}</span>}
       {post.data.tags.length > 0 && (
         <div class="tags">
           {post.data.tags.map((tag: string) => (
@@ -57,6 +69,7 @@ const relatedPosts = post.data.relatedPosts
         {post.data.pubDate.toLocaleDateString('ja-JP')}
       </time>
       <span class="author">by {post.data.author}</span>
+      {post.data.company && <span class="company">| {post.data.company}</span>}
     </div>
 
     {/* ④ Source link */}
@@ -70,6 +83,35 @@ const relatedPosts = post.data.relatedPosts
     <div class="content">
       <Content />
     </div>
+
+    {/* Compare table */}
+    {comparePosts.length > 0 && (
+      <section class="compare-section">
+        <h2>Related Coverage ({post.data.category})</h2>
+        <div class="compare-table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Country</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparePosts.map((cp: any) => (
+                <tr>
+                  <td><a href={`/news/${cp.id}/`}>{cp.data.title}</a></td>
+                  <td>{cp.data.pubDate.toLocaleDateString('ja-JP')}</td>
+                  <td>{cp.data.country.join(', ')}</td>
+                  <td>{cp.data.source || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
 
     {/* ⑥ Related posts */}
     {relatedPosts.length > 0 && (
@@ -85,10 +127,13 @@ const relatedPosts = post.data.relatedPosts
       </section>
     )}
 
-    {/* ⑦ Opinion */}
-    {post.data.opinion && (
+    {/* ⑦ Opinion (importance >= 3 only) */}
+    {post.data.opinion && post.data.importance >= 3 && (
       <aside class="opinion-box">
-        <h2>Editor's Opinion</h2>
+        <div class="opinion-header">
+          <h2>Editor's Opinion</h2>
+          <span class="importance-stars">{stars(post.data.importance)}</span>
+        </div>
         <p>{post.data.opinion}</p>
       </aside>
     )}
@@ -141,6 +186,16 @@ const relatedPosts = post.data.relatedPosts
     white-space: nowrap;
   }
 
+  .category-badge {
+    font-size: 0.7rem;
+    background: #f0e6ff;
+    color: #7b2fbf;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
   .tags {
     display: flex;
     gap: 0.4rem;
@@ -169,6 +224,11 @@ const relatedPosts = post.data.relatedPosts
 
   .article-meta .author {
     margin-left: 0.75rem;
+    color: #666;
+  }
+
+  .article-meta .company {
+    margin-left: 0.5rem;
     color: #666;
   }
 
@@ -203,6 +263,47 @@ const relatedPosts = post.data.relatedPosts
     padding-left: 1.5rem;
   }
 
+  /* Compare table */
+  .compare-section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+  }
+
+  .compare-section h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: #333;
+  }
+
+  .compare-table-wrap {
+    overflow-x: auto;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+  }
+
+  .compare-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .compare-table td a {
+    color: #1a6bb5;
+  }
+
+  /* Related posts */
   .related-posts {
     margin-top: 2.5rem;
     padding-top: 1.5rem;
@@ -234,6 +335,7 @@ const relatedPosts = post.data.relatedPosts
     text-decoration: underline;
   }
 
+  /* Opinion box */
   .opinion-box {
     margin-top: 2rem;
     padding: 1.25rem 1.5rem;
@@ -243,11 +345,24 @@ const relatedPosts = post.data.relatedPosts
     border-radius: 4px;
   }
 
-  .opinion-box h2 {
+  .opinion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .opinion-header h2 {
     font-size: 0.95rem;
     color: #1a6bb5;
-    margin: 0 0 0.75rem;
+    margin: 0;
     font-weight: 700;
+  }
+
+  .importance-stars {
+    font-size: 0.9rem;
+    color: #e8a317;
+    letter-spacing: 0.1rem;
   }
 
   .opinion-box p {
