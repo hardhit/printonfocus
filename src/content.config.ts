@@ -9,6 +9,9 @@ const news = defineCollection({
     description: z.string(),
     author: z.string().default('PrintonFocus編集部'),
     tags: z.array(z.string()).default([]),
+    source: z.string().optional(),
+    sourceUrl: z.string().url().optional(),
+    relatedPosts: z.array(z.string()).default([]),
   }),
 });
 
