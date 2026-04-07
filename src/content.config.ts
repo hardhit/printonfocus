@@ -16,6 +16,7 @@ const news = defineCollection({
     source: z.string().optional(),
     sourceUrl: z.string().url().optional(),
     relatedPosts: z.array(z.string()).default([]),
+    opinion: z.string().optional(),
   }),
 });
 

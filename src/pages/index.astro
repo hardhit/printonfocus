@@ -28,6 +28,7 @@ const posts = (await getCollection('news')).sort(
                   {post.data.pubDate.toLocaleDateString('ja-JP')}
                 </time>
                 {post.data.country && <span class="country-badge">{post.data.country}</span>}
+                {post.data.source && <span class="source-name">{post.data.source}</span>}
               </div>
               <h2>{post.data.title}</h2>
               <p>{post.data.description}</p>
@@ -79,6 +80,7 @@ const posts = (await getCollection('news')).sort(
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .post-body time {
@@ -94,6 +96,12 @@ const posts = (await getCollection('news')).sort(
     border-radius: 3px;
     font-weight: 600;
     white-space: nowrap;
+  }
+
+  .source-name {
+    font-size: 0.7rem;
+    color: #999;
+    font-style: italic;
   }
 
   .post-body h2 {
